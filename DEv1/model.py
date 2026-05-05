@@ -6,6 +6,7 @@ import warnings
 from pathlib import Path
 from typing import Dict, List
 import librosa
+from demucs.pretrained import get_model
 
 warnings.filterwarnings('ignore')
 
@@ -15,7 +16,7 @@ class DemucsSeparator:
     model_name: название модели Demucs по умолчанию 'htdemucs'
     """
 
-    def __init__(self, model_name: str = 'htdemucs', device: str = None):
+    def __init__(self, model_name: str = "htdemucs_ft", device: str = None):
 
         self.model_name = model_name
         self.device = device if device else ('cuda' if torch.cuda.is_available() else 'cpu')
@@ -24,7 +25,7 @@ class DemucsSeparator:
         # Загружаем модель
         print(f"Загрузка модели {model_name} на {self.device}...")
         from demucs import pretrained
-        self.model = pretrained.get_model(model_name)
+        self.model = get_model(self.model_name)
         self.model.to(self.device)
         self.model.eval()
         print("Модель загружена!")

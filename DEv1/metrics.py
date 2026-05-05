@@ -67,7 +67,7 @@ class MetricsEvaluator:
             raise ValueError("Укажите путь к MUSDB18 через musdb_path")
 
         print(f"Загрузка MUSDB18 из {self.musdb_path}")
-        db = musdb.DB(root=self.musdb_path, subsets='test', is_wav=True)
+        db = musdb.DB(root=self.musdb_path, subsets='test', is_wav=True, donwload=True)
 
         all_results = []
 

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 import argparse
+from datasets import load_dataset
+from torch.xpu import device
 from model import DemucsSeparator
 from metrics import MetricsEvaluator
 
@@ -37,4 +39,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+
+    separator = DemucsSeparator()
+    evaluator = MetricsEvaluator()
+
+    results = evaluator.evaluate_dataset(separator)
+#    main()
