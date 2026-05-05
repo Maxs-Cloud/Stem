@@ -40,7 +40,7 @@ def main():
 
 if __name__ == "__main__":
 
-    separator = DemucsSeparator()
+    separator = DemucsSeparator('mdx')
     evaluator = MetricsEvaluator()
 
     results = evaluator.evaluate_dataset(separator)
