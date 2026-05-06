@@ -151,7 +151,7 @@ class MetricsEvaluator:
     }
 
     # Определяем layout
-        show_spectrograms = estimated is not None
+        show_spectrograms = False
         n_cols_spect = 2 if reference else 1
         n_rows_spect = 4 if show_spectrograms else 0
 

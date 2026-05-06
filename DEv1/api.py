@@ -37,7 +37,7 @@ separator = None
 @app.on_event("startup")
 async def load_model():
     global separator
-    separator = DemucsSeparator(model_name='htdemucs_ft')
+    separator = DemucsSeparator()
 
 def validate_audio(filename: str) -> bool:
     allowed_extensions = {'.wav', '.mp3', '.flac', '.ogg', '.m4a'}
@@ -109,7 +109,7 @@ async def separate_audio(file: UploadFile = File(...), request: Request = None):
             },
             'zip_archive': f"{base_url}/download/{request_id}/archive",
             'info': {
-                'model': separator.model_name,
+                'model': separator.model_name,   # <-- исправлено: берем имя из separator
                 'device': separator.device,
                 'sample_rate': separator.sample_rate
             }
