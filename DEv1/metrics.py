@@ -13,7 +13,7 @@ warnings.filterwarnings('ignore')
 class MetricsEvaluator:
     """
     Класс для оценки качества разделения на датасете MUSDB18.
-    """
+    """clear
     def __init__(self, musdb_path: str = None):
 
         self.musdb_path = musdb_path
