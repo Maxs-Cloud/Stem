@@ -3,10 +3,7 @@ services:
     build: .
     ports:
       - "8000:8000"
-    volumes:
-      # Кэш моделей PyTorch, чтобы веса сохранялись между перезапусками
-      - torch_cache:/root/.cache/torch
-    # Для GPU (если доступен) раскомментируйте:
+
     # deploy:
     #   resources:
     #     reservations:
@@ -15,5 +12,3 @@ services:
     #           count: 1
     #           capabilities: [gpu]
 
-volumes:
-  torch_cache:
