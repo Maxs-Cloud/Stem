@@ -9,6 +9,7 @@ from tqdm import tqdm
 import warnings
 import tempfile
 import soundfile as sf
+import librosa.display
 
 warnings.filterwarnings('ignore')
 
@@ -134,27 +135,15 @@ class MetricsEvaluator:
         return summary
 
     def plot_metrics(self, df: pd.DataFrame, estimated=None, reference=None, track_name=""):
-    """
-    Визуализация метрик (столбчатые диаграммы) + спектрограммы стемов.
 
-    Args:
-        df: DataFrame с метриками (колонки: stem, SDR, SIR, SAR, ISR)
-        estimated: словарь с предсказанными стемами (опционально)
-        reference: словарь с эталонными стемами (опционально)
-        track_name: название трека
-    """
-    import librosa.display
-
-    metrics = ['SDR', 'SIR', 'SAR', 'ISR']
-
-    stem_colors = {
+        metrics = ['SDR', 'SIR', 'SAR', 'ISR']
+        stem_colors = {
         'vocals': '#E74C3C',
         'drums':  '#3498DB',
         'bass':   '#2ECC71',
         'other':  '#9B59B6'
     }
-
-    stem_cmaps = {
+        stem_cmaps = {
         'vocals': 'Oranges',
         'drums': 'Blues',
         'bass': 'Greens',
@@ -162,83 +151,83 @@ class MetricsEvaluator:
     }
 
     # Определяем layout
-    show_spectrograms = estimated is not None
-    n_cols_spect = 2 if reference else 1
-    n_rows_spect = 4 if show_spectrograms else 0
+        show_spectrograms = estimated is not None
+        n_cols_spect = 2 if reference else 1
+        n_rows_spect = 4 if show_spectrograms else 0
 
-    if show_spectrograms:
-        # Большая фигура: слева спектрограммы, справа метрики
-        fig = plt.figure(figsize=(20, 12))
-        gs = fig.add_gridspec(4, 3, width_ratios=[1, 0.5, 1.5], hspace=0.4, wspace=0.3)
-    else:
-        fig, axes = plt.subplots(2, 2, figsize=(12, 10))
-        axes_flat = axes.flatten()
+        if show_spectrograms:
+            # Большая фигура: слева спектрограммы, справа метрики
+            fig = plt.figure(figsize=(20, 12))
+            gs = fig.add_gridspec(4, 3, width_ratios=[1, 0.5, 1.5], hspace=0.4, wspace=0.3)
+        else:
+            fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+            axes_flat = axes.flatten()
 
-    fig.suptitle(f'BSSEval Metrics & Spectrograms — {track_name}',
-                 fontsize=18, fontweight='bold', y=1.02)
+        fig.suptitle(f'BSSEval Metrics & Spectrograms — {track_name}',
+                     fontsize=18, fontweight='bold', y=1.02)
 
-    # ==================== СПЕКТРОГРАММЫ (слева) ====================
-    if show_spectrograms:
-        for i, stem_name in enumerate(self.stem_names):
-            # Предсказанный стем
-            ax_est = fig.add_subplot(gs[i, 0])
-            est_audio = estimated[stem_name]
-            if est_audio.ndim > 1:
-                est_audio = np.mean(est_audio, axis=0)
+        # ==================== СПЕКТРОГРАММЫ (слева) ====================
+        if show_spectrograms:
+            for i, stem_name in enumerate(self.stem_names):
+                # Предсказанный стем
+                ax_est = fig.add_subplot(gs[i, 0])
+                est_audio = estimated[stem_name]
+                if est_audio.ndim > 1:
+                    est_audio = np.mean(est_audio, axis=0)
 
-            mel_est = librosa.feature.melspectrogram(y=est_audio, sr=44100, n_mels=128, fmax=8000)
-            mel_est_db = librosa.power_to_db(mel_est, ref=np.max)
+                mel_est = librosa.feature.melspectrogram(y=est_audio, sr=44100, n_mels=128, fmax=8000)
+                mel_est_db = librosa.power_to_db(mel_est, ref=np.max)
 
-            img = librosa.display.specshow(
-                mel_est_db, sr=44100, x_axis='time', y_axis='mel',
-                ax=ax_est, cmap=stem_cmaps.get(stem_name, 'magma'), fmax=8000
-            )
-            ax_est.set_title(f'{stem_name.upper()} (est)', fontsize=10, fontweight='bold')
-            if i == 3:
-                ax_est.set_xlabel('Time')
-
-            # Эталонный стем
-            if reference:
-                ax_ref = fig.add_subplot(gs[i, 1])
-                ref_audio = reference[stem_name]
-                if ref_audio.ndim > 1:
-                    ref_audio = np.mean(ref_audio, axis=1)
-
-                mel_ref = librosa.feature.melspectrogram(y=ref_audio, sr=44100, n_mels=128, fmax=8000)
-                mel_ref_db = librosa.power_to_db(mel_ref, ref=np.max)
-
-                librosa.display.specshow(
-                    mel_ref_db, sr=44100, x_axis='time', y_axis='mel',
-                    ax=ax_ref, cmap=stem_cmaps.get(stem_name, 'magma'), fmax=8000
+                img = librosa.display.specshow(
+                    mel_est_db, sr=44100, x_axis='time', y_axis='mel',
+                    ax=ax_est, cmap=stem_cmaps.get(stem_name, 'magma'), fmax=8000
                 )
-                ax_ref.set_title(f'{stem_name.upper()} (ref)', fontsize=10, fontweight='bold')
+                ax_est.set_title(f'{stem_name.upper()} (est)', fontsize=10, fontweight='bold')
                 if i == 3:
-                    ax_ref.set_xlabel('Time')
+                    ax_est.set_xlabel('Time')
 
-        # Colorbar для спектрограмм
-        cbar_ax = fig.add_axes([0.42, 0.15, 0.015, 0.7])
-        fig.colorbar(img, cax=cbar_ax, format='%+2.0f dB')
+                # Эталонный стем
+                if reference:
+                    ax_ref = fig.add_subplot(gs[i, 1])
+                    ref_audio = reference[stem_name]
+                    if ref_audio.ndim > 1:
+                        ref_audio = np.mean(ref_audio, axis=1)
 
-        # Метрики (справа)
-        for idx, metric in enumerate(metrics):
-            ax = fig.add_subplot(gs[idx, 2])
-            _plot_single_metric(ax, df, metric, stem_colors)
-    else:
-        # Только метрики
-        for idx, metric in enumerate(metrics):
-            ax = axes_flat[idx]
-            _plot_single_metric(ax, df, metric, stem_colors)
+                    mel_ref = librosa.feature.melspectrogram(y=ref_audio, sr=44100, n_mels=128, fmax=8000)
+                    mel_ref_db = librosa.power_to_db(mel_ref, ref=np.max)
 
-    plt.savefig('metrics_summary.png', dpi=150, bbox_inches='tight', facecolor='white')
-    plt.show()
-    print("График сохранён: metrics_summary.png")
+                    librosa.display.specshow(
+                        mel_ref_db, sr=44100, x_axis='time', y_axis='mel',
+                        ax=ax_ref, cmap=stem_cmaps.get(stem_name, 'magma'), fmax=8000
+                    )
+                    ax_ref.set_title(f'{stem_name.upper()} (ref)', fontsize=10, fontweight='bold')
+                    if i == 3:
+                        ax_ref.set_xlabel('Time')
 
-    # Таблица в консоли
-    print("\n" + "=" * 60)
-    print("СРЕДНИЕ МЕТРИКИ ПО СТЕМАМ (dB)")
-    print("=" * 60)
-    print(df.to_string(index=False))
-    print("=" * 60)
+            # Colorbar для спектрограмм
+            cbar_ax = fig.add_axes([0.42, 0.15, 0.015, 0.7])
+            fig.colorbar(img, cax=cbar_ax, format='%+2.0f dB')
+
+            # Метрики (справа)
+            for idx, metric in enumerate(metrics):
+                ax = fig.add_subplot(gs[idx, 2])
+                _plot_single_metric(ax, df, metric, stem_colors)
+        else:
+            # Только метрики
+            for idx, metric in enumerate(metrics):
+                ax = axes_flat[idx]
+                _plot_single_metric(ax, df, metric, stem_colors)
+
+        plt.savefig('metrics_summary.png', dpi=150, bbox_inches='tight', facecolor='white')
+        plt.show()
+        print("График сохранён: metrics_summary.png")
+
+        # Таблица в консоли
+        print("\n" + "=" * 60)
+        print("СРЕДНИЕ МЕТРИКИ ПО СТЕМАМ (dB)")
+        print("=" * 60)
+        print(df.to_string(index=False))
+        print("=" * 60)
 
 
 def _plot_single_metric(ax, df, metric, stem_colors):

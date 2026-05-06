@@ -1,5 +1,5 @@
 import torch
-from demucs_infer.pretrained import get_model
+from demucs_infer.htdemucs import HTDemucs  # архитектура модели
 from demucs_infer.apply import apply_model
 import numpy as np
 import soundfile as sf
@@ -11,33 +11,47 @@ warnings.filterwarnings('ignore')
 
 class DemucsSeparator:
     """
-    Класс для разделения аудио на стемы с помощью demucs-infer.
+    Класс для разделения аудио с загрузкой модели из локального файла.
     """
 
-    def __init__(self, model_name='htdemucs_ft', device=None):
-        self.model_name = model_name
+    def __init__(self, model_path=None, device=None):
+        """
+        Args:
+            model_path: путь к файлу весов (например, './Dev1/f7e0c4bc-ba3fe64a.th').
+                        Если не указан, ищет в стандартном кэше PyTorch.
+        """
         self.device = device or ('cuda' if torch.cuda.is_available() else 'cpu')
         self.sample_rate = 44100
 
-        print(f"Загрузка модели {model_name} на {self.device}...")
-
-        self.model = get_model(model_name)
+        # Загружаем архитектуру HTDemucs с параметрами по умолчанию (4 источника)
+        self.model = HTDemucs(sources=['drums', 'bass', 'other', 'vocals'])
         self.model.to(self.device)
         self.model.eval()
+
+        # Если передан путь, загружаем веса из локального файла
+        if model_path and Path(model_path).exists():
+            print(f"Загрузка весов из {model_path} ...")
+            state_dict = torch.load(model_path, map_location=self.device)
+            self.model.load_state_dict(state_dict, strict=True)
+            print("Веса успешно загружены.")
+        else:
+            # Иначе используем стандартный механизм (интернет)
+            from demucs_infer.pretrained import get_model
+            print(f"Загрузка модели htdemucs_ft через интернет...")
+            self.model = get_model('htdemucs_ft')
+            self.model.to(self.device)
+            self.model.eval()
+
         self.apply_model = apply_model
-        print("Модель загружена!")
+        print("Модель готова!")
 
     def separate(self, audio_path: str, output_dir: str = None) -> Dict[str, np.ndarray]:
-        """
-        Разделяет аудиофайл на стемы.
-
-        Порядок стемов от demucs-infer: drums, bass, other, vocals
-        """
+        """Разделение аудио на стемы (drums, bass, other, vocals)."""
         print(f"Загрузка аудио: {audio_path}")
         audio, sr = librosa.load(audio_path, sr=self.sample_rate, mono=False)
 
         if audio.ndim == 1:
-            audio = audio[np.newaxis, :]
+            audio = np.stack([audio, audio])   # моно -> псевдо-стерео
         elif audio.ndim == 2 and audio.shape[0] > 2:
             audio = audio[:2, :]
 
