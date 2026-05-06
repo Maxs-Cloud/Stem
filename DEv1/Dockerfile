@@ -5,21 +5,21 @@ WORKDIR /app
 # Устанавливаем системные зависимости
 RUN apt-get update && apt-get install -y \
     ffmpeg \
-    libsndfile1 \
-    && rm -rf /var/lib/apt/lists/*
+        libsndfile1 \
+            && rm -rf /var/lib/apt/lists/*
 
-# Копируем requirements
-COPY requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt
+            # Копируем и устанавливаем Python-зависимости
+            COPY requirements.txt .
+            RUN pip install --no-cache-dir -r requirements.txt
 
-# Копируем код
-COPY ../Dem /app
+            # Копируем ВСЕ файлы проекта
+            COPY . /app
 
-# Скачиваем модель предварительно
-RUN python -c "from demucs import pretrained; pretrained.get_model('htdemucs')"
+            # Предварительно скачиваем модель demucs-infer (НЕ оригинальный demucs!)
+            RUN python -c "from demucs_infer.pretrained import get_model; get_model('htdemucs_ft')"
 
-# Открываем порт
-EXPOSE 8000
+            # Открываем порт
+            EXPOSE 8000
 
-# Запускаем API
-CMD ["python", "api.py"]
+            # Запускаем API
+            CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]
