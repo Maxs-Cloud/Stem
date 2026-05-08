@@ -27,7 +27,7 @@ API                | FastAPI, Uvicorn
 git clone https://github.com/Maxs-Cloud/music-separator.git
 cd music-separator
 pip install -r requirements.txt
-python main.py --mode api
+python main.py
 
 Сервер запустится на http://localhost:8000
 Документация Swagger: http://localhost:8000/docs
