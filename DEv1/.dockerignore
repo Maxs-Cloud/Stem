@@ -6,6 +6,7 @@ __pycache__
 .idea
 db_test
 *.th
+*.ipynb
 *.pth
 *.pt
 *.ckpt
@@ -19,6 +20,7 @@ db_test
 *.m4a
 *.png
 *.jpg
+!README
 *.pdf
 *.docx
 *.md
